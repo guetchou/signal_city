@@ -64,9 +64,8 @@ export default function IncidentMap() {
       if (category) {
         const el = document.createElement("div");
         el.className = "marker";
-        el.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="${category.color}">
-          ${category.icon({}).props.children}
-        </svg>`;
+        const IconComponent = category.icon;
+        el.innerHTML = `<div class="${category.color}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${IconComponent({}).type.render()}</svg></div>`;
 
         new mapboxgl.Marker(el)
           .setLngLat(incident.location)
