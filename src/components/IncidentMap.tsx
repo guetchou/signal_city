@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
-import { MapPin } from "lucide-react";
+import { MapPin, AlertCircle } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { INCIDENT_CATEGORIES } from "@/lib/constants";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 type Incident = {
   id: number;
@@ -33,58 +34,75 @@ export default function IncidentMap() {
   const map = useRef<mapboxgl.Map | null>(null);
   const [mapboxToken, setMapboxToken] = useState("");
   const [isMapInitialized, setIsMapInitialized] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const initializeMap = () => {
+  const initializeMap = async () => {
     if (!mapContainer.current || !mapboxToken) return;
 
-    mapboxgl.accessToken = mapboxToken;
-    
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: "mapbox://styles/mapbox/streets-v12",
-      center: [2.3522, 48.8566] as [number, number],
-      zoom: 12,
-    });
+    setIsLoading(true);
+    setError(null);
 
-    map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
-    map.current.addControl(
-      new mapboxgl.GeolocateControl({
-        positionOptions: {
-          enableHighAccuracy: true,
-        },
-        trackUserLocation: true,
-      })
-    );
+    try {
+      mapboxgl.accessToken = mapboxToken;
+      
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: "mapbox://styles/mapbox/streets-v12",
+        center: [2.3522, 48.8566] as [number, number],
+        zoom: 12,
+      });
 
-    mockIncidents.forEach((incident) => {
-      const category = INCIDENT_CATEGORIES.find(
-        (cat) => cat.id === incident.categoryId
+      await new Promise((resolve, reject) => {
+        map.current?.on('load', resolve);
+        map.current?.on('error', reject);
+      });
+
+      map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
+      map.current.addControl(
+        new mapboxgl.GeolocateControl({
+          positionOptions: {
+            enableHighAccuracy: true,
+          },
+          trackUserLocation: true,
+        })
       );
 
-      if (category) {
-        const el = document.createElement("div");
-        el.className = "marker";
-        const IconComponent = category.icon;
-        const iconSvg = document.createElement('div');
-        iconSvg.className = category.color;
-        iconSvg.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${IconComponent({}).toString()}</svg>`;
-        el.appendChild(iconSvg);
+      mockIncidents.forEach((incident) => {
+        const category = INCIDENT_CATEGORIES.find(
+          (cat) => cat.id === incident.categoryId
+        );
 
-        new mapboxgl.Marker(el)
-          .setLngLat(incident.location)
-          .setPopup(
-            new mapboxgl.Popup({ offset: 25 }).setHTML(`
-              <div class="p-2">
-                <h3 class="font-medium">${category.label}</h3>
-                <p class="text-sm text-gray-600">Status: ${incident.status}</p>
-              </div>
-            `)
-          )
-          .addTo(map.current!);
-      }
-    });
+        if (category) {
+          const el = document.createElement("div");
+          el.className = "marker";
+          const IconComponent = category.icon;
+          const iconSvg = document.createElement('div');
+          iconSvg.className = category.color;
+          iconSvg.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${IconComponent({}).toString()}</svg>`;
+          el.appendChild(iconSvg);
 
-    setIsMapInitialized(true);
+          new mapboxgl.Marker(el)
+            .setLngLat(incident.location)
+            .setPopup(
+              new mapboxgl.Popup({ offset: 25 }).setHTML(`
+                <div class="p-2">
+                  <h3 class="font-medium">${category.label}</h3>
+                  <p class="text-sm text-gray-600">Status: ${incident.status}</p>
+                </div>
+              `)
+            )
+            .addTo(map.current!);
+        }
+      });
+
+      setIsMapInitialized(true);
+    } catch (err) {
+      console.error("Erreur lors de l'initialisation de la carte:", err);
+      setError("Une erreur est survenue lors de l'initialisation de la carte. Veuillez vérifier votre token Mapbox.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -109,6 +127,14 @@ export default function IncidentMap() {
             <span>Cliquez sur la carte pour signaler un incident</span>
           </div>
         </div>
+
+        {error && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
         <div className="space-y-4">
           <p className="text-gray-600">
             Pour utiliser la carte, veuillez entrer votre token public Mapbox.
@@ -129,9 +155,20 @@ export default function IncidentMap() {
               onChange={(e) => setMapboxToken(e.target.value)}
               placeholder="Entrez votre token public Mapbox"
               className="flex-1"
+              disabled={isLoading}
             />
-            <Button onClick={initializeMap} disabled={!mapboxToken}>
-              Initialiser la carte
+            <Button 
+              onClick={initializeMap} 
+              disabled={!mapboxToken || isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <span className="animate-spin mr-2">⚡</span>
+                  Initialisation...
+                </>
+              ) : (
+                "Initialiser la carte"
+              )}
             </Button>
           </div>
         </div>
