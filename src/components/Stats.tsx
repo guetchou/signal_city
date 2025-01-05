@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertTriangle, Lightbulb, Trash2, CheckCircle2 } from "lucide-react";
-import { INCIDENT_CATEGORIES } from "@/lib/constants";
+import { AlertTriangle, Lightbulb, CheckCircle2 } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const mockStats = {
   total: 156,
@@ -16,11 +16,13 @@ const mockStats = {
 };
 
 export default function Stats() {
+  const isMobile = useIsMobile();
+
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className={`grid gap-4 ${isMobile ? 'grid-cols-2' : 'md:grid-cols-4'}`}>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Total Signalements</CardTitle>
+          <CardTitle className="text-sm font-medium">Total</CardTitle>
           <AlertTriangle className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
