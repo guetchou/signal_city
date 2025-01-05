@@ -1,5 +1,6 @@
 import { MapPin } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
+import UserGuide from "./UserGuide";
 
 export default function Header() {
   return (
@@ -10,6 +11,7 @@ export default function Header() {
           <h1 className="text-xl font-bold text-white">SignalCity</h1>
         </div>
         <div className="flex items-center gap-4">
+          <UserGuide />
           <ThemeToggle />
           <button className="bg-secondary hover:bg-secondary/90 text-white px-4 py-2 rounded-md transition-colors">
             Signaler un incident
