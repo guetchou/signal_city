@@ -5,6 +5,7 @@ import IncidentMap from "@/components/IncidentMap";
 import Stats from "@/components/Stats";
 import Search from "@/components/Search";
 import Filters from "@/components/Filters";
+import AnalyticsDashboard from "@/components/AnalyticsDashboard";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function Index() {
@@ -23,6 +24,7 @@ export default function Index() {
                 <Filters />
               </div>
               <IncidentMap />
+              <AnalyticsDashboard />
               <IncidentList />
             </div>
             <div>
