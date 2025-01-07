@@ -6,6 +6,7 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { INCIDENT_CATEGORIES } from "@/lib/constants";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useToast } from "@/components/ui/use-toast";
 
 type Incident = {
   id: number;
@@ -36,6 +37,14 @@ export default function IncidentMap() {
   const [isMapInitialized, setIsMapInitialized] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
+
+  const validateMapboxToken = (token: string) => {
+    if (!token.startsWith('pk.')) {
+      throw new Error("Le token Mapbox doit commencer par 'pk.'");
+    }
+    return true;
+  };
 
   const initializeMap = async () => {
     if (!mapContainer.current || !mapboxToken) return;
@@ -44,6 +53,9 @@ export default function IncidentMap() {
     setError(null);
 
     try {
+      console.log("Tentative d'initialisation de la carte avec le token:", mapboxToken);
+      validateMapboxToken(mapboxToken);
+      
       mapboxgl.accessToken = mapboxToken;
       
       map.current = new mapboxgl.Map({
@@ -53,9 +65,28 @@ export default function IncidentMap() {
         zoom: 12,
       });
 
+      console.log("Carte créée, attente du chargement...");
+
       await new Promise((resolve, reject) => {
-        map.current?.on('load', resolve);
-        map.current?.on('error', reject);
+        if (!map.current) {
+          reject(new Error("La carte n'a pas pu être initialisée"));
+          return;
+        }
+
+        map.current.on('load', () => {
+          console.log("Carte chargée avec succès");
+          resolve(true);
+        });
+
+        map.current.on('error', (e) => {
+          console.error("Erreur lors du chargement de la carte:", e);
+          reject(new Error("Erreur lors du chargement de la carte"));
+        });
+
+        // Timeout de sécurité
+        setTimeout(() => {
+          reject(new Error("Timeout lors du chargement de la carte"));
+        }, 10000);
       });
 
       map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
@@ -97,9 +128,19 @@ export default function IncidentMap() {
       });
 
       setIsMapInitialized(true);
+      toast({
+        title: "Carte initialisée",
+        description: "La carte a été chargée avec succès",
+      });
     } catch (err) {
       console.error("Erreur lors de l'initialisation de la carte:", err);
-      setError("Une erreur est survenue lors de l'initialisation de la carte. Veuillez vérifier votre token Mapbox.");
+      const errorMessage = err instanceof Error ? err.message : "Une erreur inconnue est survenue";
+      setError(errorMessage);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: errorMessage,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -153,7 +194,7 @@ export default function IncidentMap() {
               type="text"
               value={mapboxToken}
               onChange={(e) => setMapboxToken(e.target.value)}
-              placeholder="Entrez votre token public Mapbox"
+              placeholder="Entrez votre token public Mapbox (commençant par pk.)"
               className="flex-1"
               disabled={isLoading}
             />
