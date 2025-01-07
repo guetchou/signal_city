@@ -11,14 +11,24 @@ export const useMapbox = (mapContainer: React.RefObject<HTMLDivElement>) => {
   const { toast } = useToast();
 
   const validateMapboxToken = (token: string) => {
+    console.log("Validation du token Mapbox:", token);
+    if (!token) {
+      throw new Error("Le token Mapbox est requis");
+    }
     if (!token.startsWith('pk.')) {
       throw new Error("Le token Mapbox doit commencer par 'pk.'");
+    }
+    if (token.length < 50) {
+      throw new Error("Le token Mapbox semble invalide (trop court)");
     }
     return true;
   };
 
   const initializeMap = async () => {
-    if (!mapContainer.current || !mapboxToken) return;
+    if (!mapContainer.current || !mapboxToken) {
+      console.error("Container ou token manquant");
+      return;
+    }
 
     setIsLoading(true);
     setError(null);
@@ -27,17 +37,20 @@ export const useMapbox = (mapContainer: React.RefObject<HTMLDivElement>) => {
       console.log("Tentative d'initialisation de la carte avec le token:", mapboxToken);
       validateMapboxToken(mapboxToken);
       
+      // Configuration de Mapbox
       mapboxgl.accessToken = mapboxToken;
       
+      console.log("Création de l'instance de la carte...");
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
         style: "mapbox://styles/mapbox/streets-v12",
-        center: [2.3522, 48.8566],
+        center: [2.3522, 48.8566], // Paris
         zoom: 12,
       });
 
-      console.log("Carte créée, attente du chargement...");
+      console.log("Attente du chargement de la carte...");
 
+      // Promesse pour attendre le chargement de la carte
       await new Promise((resolve, reject) => {
         if (!map.current) {
           reject(new Error("La carte n'a pas pu être initialisée"));
@@ -45,7 +58,7 @@ export const useMapbox = (mapContainer: React.RefObject<HTMLDivElement>) => {
         }
 
         const timeoutId = setTimeout(() => {
-          reject(new Error("Timeout lors du chargement de la carte"));
+          reject(new Error("Timeout lors du chargement de la carte (10s)"));
         }, 10000);
 
         map.current.on('load', () => {
@@ -57,11 +70,15 @@ export const useMapbox = (mapContainer: React.RefObject<HTMLDivElement>) => {
         map.current.on('error', (e) => {
           console.error("Erreur lors du chargement de la carte:", e);
           clearTimeout(timeoutId);
-          reject(new Error("Erreur lors du chargement de la carte"));
+          reject(new Error(`Erreur lors du chargement de la carte: ${e.error?.message || 'Erreur inconnue'}`));
         });
       });
 
+      // Ajout des contrôles une fois la carte chargée
+      console.log("Ajout des contrôles de navigation...");
       map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
+      
+      console.log("Ajout du contrôle de géolocalisation...");
       map.current.addControl(
         new mapboxgl.GeolocateControl({
           positionOptions: {
@@ -73,8 +90,8 @@ export const useMapbox = (mapContainer: React.RefObject<HTMLDivElement>) => {
 
       setIsMapInitialized(true);
       toast({
-        title: "Carte initialisée",
-        description: "La carte a été chargée avec succès",
+        title: "Succès",
+        description: "La carte a été initialisée avec succès",
       });
     } catch (err) {
       console.error("Erreur lors de l'initialisation de la carte:", err);
@@ -90,17 +107,15 @@ export const useMapbox = (mapContainer: React.RefObject<HTMLDivElement>) => {
     }
   };
 
+  // Nettoyage lors du démontage du composant
   useEffect(() => {
-    if (!isMapInitialized && mapboxToken) {
-      initializeMap();
-    }
-
     return () => {
       if (map.current) {
+        console.log("Nettoyage de la carte...");
         map.current.remove();
       }
     };
-  }, [mapboxToken, isMapInitialized]);
+  }, []);
 
   return {
     map: map.current,
