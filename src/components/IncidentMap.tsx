@@ -5,17 +5,24 @@ import { useMapbox } from "@/hooks/use-mapbox";
 import { MapboxTokenForm } from "./map/MapboxTokenForm";
 import { MapMarkers } from "./map/MapMarkers";
 
-const mockIncidents = [
+type Incident = {
+  id: number;
+  categoryId: string;
+  location: [number, number];
+  status: string;
+};
+
+const mockIncidents: Incident[] = [
   {
     id: 1,
     categoryId: "pothole",
-    location: [2.3522, 48.8566],
+    location: [2.3522, 48.8566] as [number, number],
     status: "PENDING",
   },
   {
     id: 2,
     categoryId: "lighting",
-    location: [2.3622, 48.8666],
+    location: [2.3622, 48.8666] as [number, number],
     status: "IN_PROGRESS",
   },
 ];
