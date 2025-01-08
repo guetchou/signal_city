@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect } from "react";
 import mapboxgl from "mapbox-gl";
 import { useToast } from "@/components/ui/use-toast";
+import { useLocalStorage } from "./use-local-storage";
 
 export const useMapbox = (mapContainer: React.RefObject<HTMLDivElement>) => {
   const map = useRef<mapboxgl.Map | null>(null);
-  const [mapboxToken, setMapboxToken] = useState("");
+  const [mapboxToken, setMapboxToken] = useLocalStorage<string>("mapbox-token", "");
   const [isMapInitialized, setIsMapInitialized] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -37,7 +38,6 @@ export const useMapbox = (mapContainer: React.RefObject<HTMLDivElement>) => {
       console.log("Tentative d'initialisation de la carte avec le token:", mapboxToken);
       validateMapboxToken(mapboxToken);
       
-      // Configuration de Mapbox
       mapboxgl.accessToken = mapboxToken;
       
       console.log("Création de l'instance de la carte...");
@@ -50,7 +50,6 @@ export const useMapbox = (mapContainer: React.RefObject<HTMLDivElement>) => {
 
       console.log("Attente du chargement de la carte...");
 
-      // Promesse pour attendre le chargement de la carte
       await new Promise((resolve, reject) => {
         if (!map.current) {
           reject(new Error("La carte n'a pas pu être initialisée"));
@@ -74,7 +73,6 @@ export const useMapbox = (mapContainer: React.RefObject<HTMLDivElement>) => {
         });
       });
 
-      // Ajout des contrôles une fois la carte chargée
       console.log("Ajout des contrôles de navigation...");
       map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
       
@@ -107,7 +105,6 @@ export const useMapbox = (mapContainer: React.RefObject<HTMLDivElement>) => {
     }
   };
 
-  // Nettoyage lors du démontage du composant
   useEffect(() => {
     return () => {
       if (map.current) {

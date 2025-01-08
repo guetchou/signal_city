@@ -1,5 +1,9 @@
+import { useState } from "react";
 import { INCIDENT_CATEGORIES } from "@/lib/constants";
 import { Badge } from "@/components/ui/badge";
+import { CategoryFilter } from "./incident-filters/CategoryFilter";
+import { SortButton } from "./incident-sort/SortButton";
+import { StatsGrid } from "./incident-stats/StatsGrid";
 
 const mockIncidents = [
   {
@@ -41,45 +45,79 @@ const getStatusColor = (status: string) => {
 };
 
 export default function IncidentList() {
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [sortBy, setSortBy] = useState<"date" | "status" | "category">("date");
+
+  const filteredIncidents = mockIncidents
+    .filter((incident) => 
+      selectedCategory ? incident.categoryId === selectedCategory : true
+    )
+    .sort((a, b) => {
+      switch (sortBy) {
+        case "date":
+          return new Date(b.date).getTime() - new Date(a.date).getTime();
+        case "status":
+          return a.status.localeCompare(b.status);
+        case "category":
+          return a.categoryId.localeCompare(b.categoryId);
+        default:
+          return 0;
+      }
+    });
+
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <h2 className="text-xl font-semibold mb-4">Signalements récents</h2>
-      <div className="space-y-4">
-        {mockIncidents.map((incident) => {
-          const category = INCIDENT_CATEGORIES.find(
-            (cat) => cat.id === incident.categoryId
-          );
-          
-          return (
-            <div
-              key={incident.id}
-              className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  {category && (
-                    <category.icon className={`h-5 w-5 ${category.color}`} />
-                  )}
-                  <div>
-                    <h3 className="font-medium">{category?.label}</h3>
-                    <p className="text-sm text-gray-600">{incident.location}</p>
+    <div className="space-y-6">
+      <StatsGrid />
+      
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-semibold">Signalements récents</h2>
+          <div className="flex gap-2">
+            <CategoryFilter
+              selectedCategory={selectedCategory}
+              onCategoryChange={setSelectedCategory}
+            />
+            <SortButton onSort={setSortBy} />
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          {filteredIncidents.map((incident) => {
+            const category = INCIDENT_CATEGORIES.find(
+              (cat) => cat.id === incident.categoryId
+            );
+            
+            return (
+              <div
+                key={incident.id}
+                className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3">
+                    {category && (
+                      <category.icon className={`h-5 w-5 ${category.color}`} />
+                    )}
+                    <div>
+                      <h3 className="font-medium">{category?.label}</h3>
+                      <p className="text-sm text-gray-600">{incident.location}</p>
+                    </div>
+                  </div>
+                  <div className="text-right space-y-2">
+                    <span className="text-sm text-gray-600 block">
+                      {incident.date}
+                    </span>
+                    <Badge
+                      variant="secondary"
+                      className={`${getStatusColor(incident.status)}`}
+                    >
+                      {incident.status}
+                    </Badge>
                   </div>
                 </div>
-                <div className="text-right space-y-2">
-                  <span className="text-sm text-gray-600 block">
-                    {incident.date}
-                  </span>
-                  <Badge
-                    variant="secondary"
-                    className={`${getStatusColor(incident.status)}`}
-                  >
-                    {incident.status}
-                  </Badge>
-                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </div>
   );
