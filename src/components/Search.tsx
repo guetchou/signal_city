@@ -2,17 +2,18 @@ import { Input } from "@/components/ui/input";
 import { Search as SearchIcon } from "lucide-react";
 
 interface SearchProps {
-  onSearch?: (query: string) => void;
+  onSearch: (query: string) => void;
 }
 
 export default function Search({ onSearch }: SearchProps) {
   return (
     <div className="relative">
-      <SearchIcon className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+      <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
       <Input
-        placeholder="Rechercher un signalement..."
-        className="pl-8"
-        onChange={(e) => onSearch?.(e.target.value)}
+        type="search"
+        placeholder="Rechercher un incident..."
+        className="pl-10"
+        onChange={(e) => onSearch(e.target.value)}
       />
     </div>
   );

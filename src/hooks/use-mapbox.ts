@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import mapboxgl from "mapbox-gl";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useLocalStorage } from "./use-local-storage";
 
 export const useMapbox = (mapContainer: React.RefObject<HTMLDivElement>) => {
@@ -26,8 +26,25 @@ export const useMapbox = (mapContainer: React.RefObject<HTMLDivElement>) => {
   };
 
   const initializeMap = async () => {
-    if (!mapContainer.current || !mapboxToken) {
-      console.error("Container ou token manquant");
+    console.log("Début de l'initialisation de la carte");
+    
+    if (!mapContainer.current) {
+      console.error("Container manquant");
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Container de la carte non trouvé",
+      });
+      return;
+    }
+    
+    if (!mapboxToken) {
+      console.error("Token manquant");
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Token Mapbox requis",
+      });
       return;
     }
 
@@ -35,7 +52,7 @@ export const useMapbox = (mapContainer: React.RefObject<HTMLDivElement>) => {
     setError(null);
 
     try {
-      console.log("Tentative d'initialisation de la carte avec le token:", mapboxToken);
+      console.log("Tentative d'initialisation avec le token:", mapboxToken);
       validateMapboxToken(mapboxToken);
       
       mapboxgl.accessToken = mapboxToken;
@@ -73,10 +90,8 @@ export const useMapbox = (mapContainer: React.RefObject<HTMLDivElement>) => {
         });
       });
 
-      console.log("Ajout des contrôles de navigation...");
+      console.log("Ajout des contrôles...");
       map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
-      
-      console.log("Ajout du contrôle de géolocalisation...");
       map.current.addControl(
         new mapboxgl.GeolocateControl({
           positionOptions: {
@@ -92,7 +107,7 @@ export const useMapbox = (mapContainer: React.RefObject<HTMLDivElement>) => {
         description: "La carte a été initialisée avec succès",
       });
     } catch (err) {
-      console.error("Erreur lors de l'initialisation de la carte:", err);
+      console.error("Erreur lors de l'initialisation:", err);
       const errorMessage = err instanceof Error ? err.message : "Une erreur inconnue est survenue";
       setError(errorMessage);
       toast({

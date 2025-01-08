@@ -1,46 +1,25 @@
-import { useState, useCallback, useEffect } from 'react';
-import { useToast } from "@/components/ui/use-toast";
+import { useLocalStorage } from "./use-local-storage";
 
-export const useFavorites = <T extends { id: number }>(key: string) => {
-  const [favorites, setFavorites] = useState<T[]>([]);
-  const { toast } = useToast();
+export function useFavorites<T extends { id: number | string }>(key: string) {
+  const [favorites, setFavorites] = useLocalStorage<T[]>(key, []);
 
-  useEffect(() => {
-    const stored = localStorage.getItem(key);
-    if (stored) {
-      try {
-        setFavorites(JSON.parse(stored));
-      } catch (error) {
-        console.error('Error loading favorites:', error);
+  const toggleFavorite = (item: T) => {
+    setFavorites(current => {
+      const exists = current.some(f => f.id === item.id);
+      if (exists) {
+        return current.filter(f => f.id !== item.id);
       }
-    }
-  }, [key]);
-
-  const toggleFavorite = useCallback((item: T) => {
-    setFavorites((prev) => {
-      const isAlreadyFavorite = prev.some((fav) => fav.id === item.id);
-      const newFavorites = isAlreadyFavorite
-        ? prev.filter((fav) => fav.id !== item.id)
-        : [...prev, item];
-      
-      localStorage.setItem(key, JSON.stringify(newFavorites));
-      
-      toast({
-        title: isAlreadyFavorite ? "Retiré des favoris" : "Ajouté aux favoris",
-        description: `L'incident a été ${isAlreadyFavorite ? 'retiré des' : 'ajouté aux'} favoris.`,
-      });
-      
-      return newFavorites;
+      return [...current, item];
     });
-  }, [key, toast]);
+  };
 
-  const isFavorite = useCallback((id: number) => {
-    return favorites.some((fav) => fav.id === id);
-  }, [favorites]);
+  const isFavorite = (id: T['id']) => {
+    return favorites.some(f => f.id === id);
+  };
 
   return {
     favorites,
     toggleFavorite,
-    isFavorite,
+    isFavorite
   };
-};
+}
