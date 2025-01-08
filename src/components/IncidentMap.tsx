@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { MapPin } from "lucide-react";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { useMapbox } from "@/hooks/use-mapbox";
@@ -31,6 +31,8 @@ const mockIncidents: Incident[] = [
 export default function IncidentMap() {
   const mapContainer = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const [isContainerReady, setIsContainerReady] = useState(false);
+  
   const {
     map,
     mapboxToken,
@@ -42,15 +44,30 @@ export default function IncidentMap() {
   } = useMapbox(mapContainer);
 
   useEffect(() => {
-    console.log("Map container:", mapContainer.current);
-    if (!mapContainer.current) {
+    console.log("Vérification du container de la carte...");
+    if (mapContainer.current) {
+      console.log("Container de la carte trouvé et prêt");
+      setIsContainerReady(true);
+    } else {
+      console.error("Container de la carte non trouvé");
       toast({
         variant: "destructive",
         title: "Erreur",
         description: "Container de la carte non trouvé",
       });
     }
-  }, [mapContainer.current]);
+  }, []);
+
+  if (!isContainerReady) {
+    console.log("En attente de l'initialisation du container...");
+    return (
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="h-[400px] flex items-center justify-center">
+          <p>Chargement de la carte...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!isMapInitialized) {
     return (
