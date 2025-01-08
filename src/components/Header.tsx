@@ -1,4 +1,4 @@
-import { ThemeToggle } from "./ThemeToggle";
+import ThemeToggle from "./ThemeToggle";
 import { NotificationBell } from "./notifications/NotificationBell";
 
 export default function Header() {

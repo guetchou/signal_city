@@ -11,6 +11,11 @@ import { useIsMobile } from "@/hooks/use-mobile";
 export default function Index() {
   const isMobile = useIsMobile();
 
+  const handleSearch = (query: string) => {
+    console.log('Search query:', query);
+    // Implement search logic here if needed
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -20,7 +25,7 @@ export default function Index() {
           <div className={`space-y-6 md:space-y-0 ${isMobile ? '' : 'grid grid-cols-2 gap-8'}`}>
             <div className="space-y-6">
               <div className="space-y-4">
-                <Search />
+                <Search onSearch={handleSearch} />
                 <Filters />
               </div>
               <IncidentMap />

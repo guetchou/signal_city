@@ -4,7 +4,7 @@ export const useSearch = <T extends Record<string, any>>(
   items: T[],
   searchFields: (keyof T)[]
 ) => {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   const filteredItems = items.filter((item) =>
     searchFields.some((field) =>
