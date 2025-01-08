@@ -1,9 +1,10 @@
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 import { MapPin } from "lucide-react";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { useMapbox } from "@/hooks/use-mapbox";
 import { MapboxTokenForm } from "./map/MapboxTokenForm";
 import { MapMarkers } from "./map/MapMarkers";
+import { useToast } from "@/hooks/use-toast";
 
 type Incident = {
   id: number;
@@ -29,6 +30,7 @@ const mockIncidents: Incident[] = [
 
 export default function IncidentMap() {
   const mapContainer = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
   const {
     map,
     mapboxToken,
@@ -38,6 +40,17 @@ export default function IncidentMap() {
     isLoading,
     initializeMap
   } = useMapbox(mapContainer);
+
+  useEffect(() => {
+    console.log("Map container:", mapContainer.current);
+    if (!mapContainer.current) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Container de la carte non trouvé",
+      });
+    }
+  }, [mapContainer.current]);
 
   if (!isMapInitialized) {
     return (
