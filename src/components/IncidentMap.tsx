@@ -32,6 +32,7 @@ export default function IncidentMap() {
   const mapContainer = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const [isContainerReady, setIsContainerReady] = useState(false);
+  const [containerError, setContainerError] = useState<string | null>(null);
   
   const {
     map,
@@ -45,25 +46,70 @@ export default function IncidentMap() {
 
   useEffect(() => {
     console.log("Vérification du container de la carte...");
-    if (mapContainer.current) {
-      console.log("Container de la carte trouvé et prêt");
-      setIsContainerReady(true);
-    } else {
-      console.error("Container de la carte non trouvé");
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Container de la carte non trouvé",
-      });
-    }
+    const checkContainer = () => {
+      if (mapContainer.current) {
+        console.log("Container de la carte trouvé et prêt");
+        setIsContainerReady(true);
+        setContainerError(null);
+      } else {
+        console.error("Container de la carte non trouvé");
+        setContainerError("Container de la carte non trouvé");
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Container de la carte non trouvé",
+        });
+      }
+    };
+
+    // Vérification initiale
+    checkContainer();
+
+    // Vérification périodique pendant 5 secondes
+    const interval = setInterval(checkContainer, 1000);
+    const timeout = setTimeout(() => {
+      clearInterval(interval);
+      if (!isContainerReady) {
+        setContainerError("Impossible d'initialiser le container de la carte après plusieurs tentatives");
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Échec de l'initialisation de la carte",
+        });
+      }
+    }, 5000);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
   }, []);
+
+  if (containerError) {
+    return (
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="h-[400px] flex items-center justify-center flex-col gap-4">
+          <p className="text-red-500">{containerError}</p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Réessayer
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (!isContainerReady) {
     console.log("En attente de l'initialisation du container...");
     return (
       <div className="bg-white rounded-lg shadow-md p-6">
         <div className="h-[400px] flex items-center justify-center">
-          <p>Chargement de la carte...</p>
+          <div className="flex flex-col items-center gap-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            <p>Chargement de la carte...</p>
+          </div>
         </div>
       </div>
     );
